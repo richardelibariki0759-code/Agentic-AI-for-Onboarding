@@ -5,7 +5,6 @@ Includes:
   - render_steps_with_semantic_images  (cosine-sim image→step matching)
   - Procedural fallback logging: "No procedural results found -> fallback to hybrid search"
   - Focused non-procedural answers (only address the user's exact question)
-  - Multi-file-type upload endpoint (delegates to ingest.py)
   - Session-based conversational state machine
 """
 
@@ -34,9 +33,8 @@ from ingest import (
     SUPPORTED_EXTENSIONS,
 )
 
-# =========================================================
+
 # APP
-# =========================================================
 
 app = FastAPI(title="Artemis Onboarding Agentic AI API")
 
@@ -48,9 +46,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# =========================================================
+
 # MODELS & DB
-# =========================================================
 
 embedding_model = SentenceTransformer("BAAI/bge-base-en-v1.5")
 
@@ -91,9 +88,8 @@ def startup():
     _rebuild_bm25()
 
 
-# =========================================================
+
 # CONSTANTS
-# =========================================================
 
 INTENTS = {
     "GREETING",
@@ -162,9 +158,8 @@ TOPIC_EXAMPLES = {
     ],
 }
 
-# =========================================================
+
 # IMAGE EXTRACTION
-# =========================================================
 
 def extract_images_with_context(text: str, window: int = 100) -> tuple[str, list[dict]]:
     """
@@ -221,9 +216,8 @@ def render_steps_with_semantic_images(
     return rendered
 
 
-# =========================================================
+
 # INTENT CLASSIFIER  (replaces all keyword/regex detection)
-# =========================================================
 
 def classify(text: str) -> str:
     """
@@ -338,9 +332,8 @@ Label:"""
     return "PROCEED" if "PROCEED" in raw else "NEW"
 
 
-# =========================================================
+
 # HELPERS
-# =========================================================
 
 def _tokenize(text: str) -> list[str]:
     text = re.sub(r"[^a-zA-Z0-9 ]", " ", text.lower())
@@ -364,9 +357,8 @@ def _get_embedding(text: str, is_query: bool = False) -> list[float]:
     return list(_cached_embedding(prefix + text))
 
 
-# =========================================================
+
 # SEARCH
-# =========================================================
 
 def _vector_search(query: str, k: int = 10):
     q_emb = _get_embedding(query, is_query=True)
@@ -442,9 +434,8 @@ def _retrieve(query: str):
     return _hybrid_search(query)
 
 
-# =========================================================
+
 # LLM HELPERS
-# =========================================================
 
 def _llm(prompt: str, max_tokens: int = 80) -> str:
     r = ollama.chat(
@@ -588,9 +579,9 @@ def _generate_challenge_answer(
     return _llm(prompt, max_tokens=1500)
 
 
-# =========================================================
+
 # SESSION HELPERS
-# =========================================================
+
 
 def _new_session() -> dict:
     return {
@@ -618,9 +609,8 @@ def _full_reset(s: dict):
     s.update(_new_session())
 
 
-# =========================================================
+
 # PYDANTIC MODELS
-# =========================================================
 
 class ChatRequest(BaseModel):
     session_id: str
@@ -637,9 +627,8 @@ class SessionResponse(BaseModel):
     session_id: str
 
 
-# =========================================================
+
 # ROUTES
-# =========================================================
 
 @app.post("/session", response_model=SessionResponse)
 def create_session():
@@ -656,7 +645,7 @@ def chat(req: ChatRequest):
     if not user_input:
         raise HTTPException(status_code=400, detail="Empty message")
 
-    # ── STEP A: familiarity reply ────────────────────────────────────────
+    # ── STEP A: familiarity reply
     if s["awaiting_confirmation"]:
         topic = s["pending_topic"]
         decision = _classify_familiarity(topic, user_input)
@@ -693,7 +682,7 @@ def chat(req: ChatRequest):
             )
             return {"reply": reply, "state": "awaiting_confirmation", "images": []}
 
-    # ── STEP B: user states goal ─────────────────────────────────────────
+    # ── STEP B: user states goal
     if s["awaiting_goal"]:
         topic = s["pending_topic"]
         vague = _llm(
@@ -749,7 +738,7 @@ def chat(req: ChatRequest):
             _full_reset(s)
             return {"reply": clean_reply, "state": "idle", "images": image_urls}
 
-    # ── STEP C: did user complete the step? ──────────────────────────────
+    # ── STEP C: did user complete the step?
     if s["awaiting_step_confirmation"]:
         decision = _classify_yes_no(user_input)
         idx = s["current_step_index"]
@@ -777,7 +766,7 @@ def chat(req: ChatRequest):
                 "images": [],
             }
 
-    # ── STEP D: focused help for challenge ───────────────────────────────
+    # ── STEP D: focused help for challenge 
     if s["awaiting_challenge"]:
         idx = s["current_step_index"]
         steps = s["all_steps"]
@@ -810,7 +799,7 @@ def chat(req: ChatRequest):
         s["awaiting_step_confirmation"] = True
         return {"reply": reply, "state": "awaiting_step_confirmation", "images": image_urls}
 
-    # ── STEP E: proceed or new topic ─────────────────────────────────────
+    # ── STEP E: proceed or new topic 
     if s["awaiting_proceed_or_new"]:
         decision = _classify_proceed_or_new(user_input)
         if decision == "PROCEED":
@@ -840,7 +829,7 @@ def chat(req: ChatRequest):
                 "images": [],
             }
 
-    # ── STEP F: new topic / first message ────────────────────────────────
+    # ── STEP F: new topic / first message 
     intent = classify(user_input)
 
     if intent == "GREETING" or intent == "CHITCHAT":
@@ -862,9 +851,8 @@ def chat(req: ChatRequest):
     return {"reply": question, "state": "awaiting_confirmation", "images": []}
 
 
-# =========================================================
+
 # FORMAT HELPERS
-# =========================================================
 
 def _format_step(step_text: str, idx: int, total: int) -> str:
     filled = round((idx + 1) / total * 10)
@@ -899,9 +887,9 @@ def _ask_next_step(current: int, total: int) -> str:
     )
 
 
-# =========================================================
+
 # DOCUMENT UPLOAD  (multi file type, delegates to ingest.py)
-# =========================================================
+
 
 @app.post("/upload")
 async def upload_document(file: UploadFile = File(...)):
