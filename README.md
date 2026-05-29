@@ -1,4 +1,4 @@
-# Hybrid Procedural RAG — React + FastAPI
+# Agentic AI RAG — React + FastAPI
 
 ```
 project/
