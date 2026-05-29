@@ -17,9 +17,8 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# ─────────────────────────────────────────────────────────────────────────────
+
 # CONFIG
-# ─────────────────────────────────────────────────────────────────────────────
 
 CHROMA_PATH = "./chroma_db"
 COLLECTION_NAME = "txt_docs"
@@ -27,9 +26,9 @@ SIMILARITY_THRESHOLD = 0.72
 MAX_CHUNK_SENTENCES = 8
 SUPPORTED_EXTENSIONS = {".txt", ".pdf", ".docx", ".md", ".csv"}
 
-# ─────────────────────────────────────────────────────────────────────────────
-# INIT (module-level singletons so the model loads once when imported)
-# ─────────────────────────────────────────────────────────────────────────────
+
+# INIT 
+
 
 print("[ingest] Loading embedding model …")
 _embedding_model = SentenceTransformer("BAAI/bge-large-en-v1.5")
@@ -41,9 +40,8 @@ print(f"[ingest] ChromaDB ready at '{CHROMA_PATH}'  "
       f"(existing docs: {_collection.count()})")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+
 # TEXT EXTRACTION  (per file type)
-# ─────────────────────────────────────────────────────────────────────────────
 
 def _extract_txt(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore")
@@ -116,18 +114,16 @@ def extract_text(path: Path) -> str:
     return EXTRACTORS[ext](path)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+
 # TEXT CLEANING
-# ─────────────────────────────────────────────────────────────────────────────
 
 def _clean(text: str) -> str:
     text = re.sub(r"\s+", " ", text)
     return text.strip()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+
 # STEP DETECTION
-# ─────────────────────────────────────────────────────────────────────────────
 
 def _detect_step_number(text: str) -> Optional[int]:
     patterns = [
@@ -145,9 +141,8 @@ def _detect_step_number(text: str) -> Optional[int]:
     return None
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+
 # SEMANTIC CHUNKING
-# ─────────────────────────────────────────────────────────────────────────────
 
 def semantic_chunk(
     text: str,
@@ -183,9 +178,8 @@ def semantic_chunk(
     return chunks
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+
 # EMBEDDING
-# ─────────────────────────────────────────────────────────────────────────────
 
 def _embed(text: str) -> list[float]:
     return _embedding_model.encode(
@@ -193,9 +187,9 @@ def _embed(text: str) -> list[float]:
     ).tolist()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+
 # CORE INGEST
-# ─────────────────────────────────────────────────────────────────────────────
+
 
 def ingest_file(path: str | Path) -> dict:
     """
@@ -266,9 +260,7 @@ def list_indexed_sources() -> list[str]:
     return sorted(sources)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # CLI
-# ─────────────────────────────────────────────────────────────────────────────
 
 def _parse_args():
     parser = argparse.ArgumentParser(
