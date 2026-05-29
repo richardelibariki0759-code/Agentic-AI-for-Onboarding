@@ -14,7 +14,7 @@ const QUICK_REPLIES = {
   awaiting_confirmation: ["Yes, I'm familiar", "No, I'm new to this"],
 };
 
-// ─── Topic icon — image if available, emoji fallback ─────────────────────────
+// ─── Topic icon — image if available, emoji fallback
 function TopicIcon({ topic, size = 28 }) {
   if (topic.iconImg) {
     return (
@@ -29,7 +29,7 @@ function TopicIcon({ topic, size = 28 }) {
   return <span style={{ fontSize: size }}>{topic.icon}</span>;
 }
 
-// ─── Markdown-lite renderer ──────────────────────────────────────────────────
+// ─── Markdown-lite renderer 
 function MarkdownLine({ text }) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return (
@@ -45,7 +45,7 @@ function MarkdownLine({ text }) {
   );
 }
 
-// Strip [Image URL: ...] labels AND bare image URLs from display text,
+// Strip [Image URL:] labels AND bare image URLs from display text,
 // and collect the URLs so we can render them as <img> tags instead.
 function extractAndCleanImages(text) {
   if (!text) return { cleaned: text, urls: [] };
@@ -134,7 +134,7 @@ function MessageContent({ content }) {
   return <div style={{ fontSize: 15, lineHeight: 1.65 }}>{elements}</div>;
 }
 
-// ─── Step progress ───────────────────────────────────────────────────────────
+// ─── Step progress
 function StepProgress({ content }) {
   const match = content?.match(/`(\d+)\/(\d+)`/);
   if (!match) return null;
@@ -154,7 +154,7 @@ function StepProgress({ content }) {
   );
 }
 
-// ─── Image gallery (no URLs shown) ───────────────────────────────────────────
+// ─── Image gallery (no URLs shown)
 function ImageGallery({ urls }) {
   if (!urls || urls.length === 0) return null;
   return (
@@ -181,7 +181,7 @@ function ImageGallery({ urls }) {
   );
 }
 
-// ─── Message — images shown BEFORE the ✅ checkpoint line ────────────────────
+// ─── Message — images shown BEFORE the ✅ checkpoint line
 function Message({ msg }) {
   const isBot = msg.role === "assistant";
   const hasStep = isBot && msg.content?.includes("📍 Step");
@@ -230,7 +230,7 @@ function Message({ msg }) {
   );
 }
 
-// ─── Typing indicator ────────────────────────────────────────────────────────
+// ─── Typing indicator
 function TypingIndicator() {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
@@ -246,7 +246,7 @@ function TypingIndicator() {
   );
 }
 
-// ─── Quick replies ───────────────────────────────────────────────────────────
+// ─── Quick replies 
 function QuickReplies({ state, onSend }) {
   const replies = QUICK_REPLIES[state];
   if (!replies) return null;
@@ -261,7 +261,7 @@ function QuickReplies({ state, onSend }) {
   );
 }
 
-// ─── Admin Upload Panel (admin-only) ─────────────────────────────────────────
+// ─── Admin Upload Panel (admin-only) 
 function AdminUploadPanel() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -354,7 +354,7 @@ function AdminUploadPanel() {
   );
 }
 
-// ─── Welcome screen ──────────────────────────────────────────────────────────
+// ─── Welcome screen
 function WelcomeScreen({ onTopicSelect }) {
   return (
     <div style={{ flex: 1, overflowY: "auto", padding: "48px 24px 24px", display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -383,7 +383,7 @@ function WelcomeScreen({ onTopicSelect }) {
   );
 }
 
-// ─── Sidebar ─────────────────────────────────────────────────────────────────
+// ─── Sidebar 
 function Sidebar({ onNewChat, onTopicSelect, currentState, isAdmin }) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -464,7 +464,7 @@ function Sidebar({ onNewChat, onTopicSelect, currentState, isAdmin }) {
   );
 }
 
-// ─── Main App ─────────────────────────────────────────────────────────────────
+// ─── Main App 
 export default function App() {
   const [sessionId, setSessionId] = useState(null);
   const [messages, setMessages] = useState([]);
